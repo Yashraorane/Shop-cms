@@ -1,5 +1,6 @@
 import React from 'react';
 import fetch from 'node-fetch';
+import Link from 'next/link';
 
 export default async function Products() {
   try {
@@ -23,35 +24,53 @@ export default async function Products() {
             </div>
             <div className="flex flex-wrap -m-4">
               {products.map((product) => {
+                // Check for image formats
                 const imageUrl = product.images?.[0]?.formats?.medium?.url
                   ? `http://localhost:1337${product.images[0].formats.medium.url}`
-                  : 'https://dummyimage.com/720x400';
+                  : product.images?.[0]?.url
+                    ? `http://localhost:1337${product.images[0].url}`
+                    : 'https://dummyimage.com/720x400';
 
                 return (
                   <div key={product.id} className="xl:w-1/4 md:w-1/2 p-4">
-                    <div className="bg-gray-100 p-6 rounded-lg">
-                      <img
-                        className="h-40 rounded w-full object-cover object-center mb-6"
-                        src={imageUrl}
-                        alt={product.title || 'Product'}
-                      />
-                      <h3 className="tracking-widest text-indigo-500 text-xs font-medium title-font">
-                        {product.category || 'No category'}
-                      </h3>
-                      <h2 className="text-lg text-gray-900 font-medium title-font mb-4">
-                        {product.title || 'No title'}
-                      </h2>
-                      <p className="leading-relaxed text-base">
-                        {product.descriptions || 'No description available'}
-                      </p>
-                      <p className="text-gray-700">Color: {product.color || 'N/A'}</p>
-                      <p className="text-gray-700">Price: ${product.price || 'N/A'}</p>
+                    <div className="bg-gray-100 p-6 rounded-lg h-full flex flex-col">
+                      {/* Ensure images have a fixed height */}
+                      <div className="flex-shrink-0">
+                        <img
+                          className="h-40 w-full object-cover object-center mb-6"
+                          src={imageUrl}
+                          alt={product.title || 'Product'}
+                        />
+                      </div>
+                      <div className="flex-grow">
+                        <h3 className="tracking-widest text-indigo-500 text-xs font-medium title-font">
+                          {product.category || 'No category'}
+                        </h3>
+                        <h3>{product.id}</h3>
+                        <h2 className="text-lg text-gray-900 font-medium title-font mb-4">
+                          {product.title || 'No title'}
+                        </h2>
+                        <p className="leading-relaxed text-base">
+                          {product.descriptions || 'No description available'}
+                        </p>
+                        <p className="flex items-center space-x-2 text-gray-700">
+                          <span
+                            className={`border-2 rounded-full w-6 h-6`}
+                            style={{ backgroundColor: product.color || 'transparent' }}
+                          ></span>
+                          <span>Color: {product.color || 'N/A'}</span>
+                        </p>
 
-                      {/* Button with dynamic background color */}
-                      <button
-                        className={`border-2 border-gray-300 ml-1 rounded-full w-6 h-6 focus:outline-none`}
-                        style={{ backgroundColor: product.color || 'transparent' }}
-                      ></button>
+                        <p className="text-gray-700">Price: ${product.price || 'N/A'}</p>
+
+                        {/* Buy Now Button */}
+                        <Link href={`/items/${product.id}`}>
+                          <button className="my-4 text-white bg-indigo-500 border-0 py-1 md:py-2 px-2 md:px-4 focus:outline-none hover:bg-indigo-600 rounded text-sm">
+                            Buy Now
+                          </button>
+                        </Link>
+
+                      </div>
                     </div>
                   </div>
                 );
