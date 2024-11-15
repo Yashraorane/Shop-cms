@@ -1,6 +1,7 @@
 import React from 'react';
 import fetch from 'node-fetch';
 import Link from 'next/link';
+import CustomImage from '../components/Image';
 
 export default async function Products() {
   try {
@@ -23,30 +24,43 @@ export default async function Products() {
               </div>
             </div>
             <div className="flex flex-wrap -m-4">
+              {/* {products.map((product) => {
+                const imageUrl = product.images?.[0]?.formats?.medium?.url
+                  ? `http://localhost:1337${product.images[0].formats.medium.url}`
+                  : 'https://dummyimage.com/720x400'; */}
               {products.map((product) => {
-                // Check for image formats
+                // Determine the image URL based on available formats
                 const imageUrl = product.images?.[0]?.formats?.medium?.url
                   ? `http://localhost:1337${product.images[0].formats.medium.url}`
                   : product.images?.[0]?.url
                     ? `http://localhost:1337${product.images[0].url}`
                     : 'https://dummyimage.com/720x400';
 
+                // return (
+                //   <div key={product.id} className="xl:w-1/4 md:w-1/2 p-4">
+                //     <div className="bg-gray-100 p-6 rounded-lg h-full flex flex-col">
+                //       <div className="flex-shrink-0">
+                //         <CustomImage
+                //           src={imageUrl}
+                //           alt={product.title}
+                //         />
+                //       </div>
                 return (
                   <div key={product.id} className="xl:w-1/4 md:w-1/2 p-4">
                     <div className="bg-gray-100 p-6 rounded-lg h-full flex flex-col">
-                      {/* Ensure images have a fixed height */}
-                      <div className="flex-shrink-0">
-                        <img
-                          className="h-40 w-full object-cover object-center mb-6"
+                      {/* Image Container */}
+                      <div className="flex-shrink-0 mb-6">
+                        <CustomImage
                           src={imageUrl}
                           alt={product.title || 'Product'}
+                          width={600}   // Specify width to control aspect ratio
+                          height={400}  // Specify height to control aspect ratio
                         />
                       </div>
                       <div className="flex-grow">
                         <h3 className="tracking-widest text-indigo-500 text-xs font-medium title-font">
                           {product.category || 'No category'}
                         </h3>
-                        <h3>{product.id}</h3>
                         <h2 className="text-lg text-gray-900 font-medium title-font mb-4">
                           {product.title || 'No title'}
                         </h2>
@@ -63,7 +77,6 @@ export default async function Products() {
 
                         <p className="text-gray-700">Price: ${product.price || 'N/A'}</p>
 
-                        {/* Buy Now Button */}
                         <Link href={`/items/${product.id}`}>
                           <button className="my-4 text-white bg-indigo-500 border-0 py-1 md:py-2 px-2 md:px-4 focus:outline-none hover:bg-indigo-600 rounded text-sm">
                             Buy Now
