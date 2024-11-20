@@ -2,11 +2,14 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { CartContext } from '../context/CartContext';
 import Script from 'next/script';
+import { loadStripe } from '@stripe/stripe-js';
+
 
 const Checkout = () => {
     const { cart } = useContext(CartContext); // Access cart from context
     const [subtotal, setSubtotal] = useState(0);
     const [form, setForm] = useState({ name: "", email: "", address: "", phone: "" });
+    const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
     useEffect(() => {
         // Calculate subtotal
@@ -19,52 +22,36 @@ const Checkout = () => {
     };
 
     const submit = async () => {
-        const orderId = "OID" + Math.floor(1000000 * Math.random());
-        const url = `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/orders/pretransaction`;
-
         try {
-            const rawResponse = await fetch(url, {
+            // Call your backend to create a checkout session
+            const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/orders/create-checkout-session`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId, amount: subtotal, ...form, cart })
-            });
-            const content = await rawResponse.json();
-
-            const config = {
-                root: "",
-                flow: "DEFAULT",
-                data: {
-                    orderId,
-                    token: content.body.txnToken,
-                    tokenType: "TXN_TOKEN",
-                    amount: subtotal
+                headers: {
+                    'Content-Type': 'application/json',
                 },
-                handler: {
-                    notifyMerchant: function (eventName, data) {
-                        console.log("notifyMerchant handler function called", eventName, data);
-                    }
-                }
-            };
+                body: JSON.stringify({ cart, form, amount: subtotal }),
+            });
+            
+            const session = await response.json();
+            console.log('Stripe session ID:', session.id); // Debugging log
 
-            if (window.Paytm && window.Paytm.CheckoutJS) {
-                window.Paytm.CheckoutJS.init(config)
-                    .then(() => window.Paytm.CheckoutJS.invoke())
-                    .catch(error => console.error("Paytm CheckoutJS Error:", error));
+    
+            // Redirect to Stripe Checkout
+            const stripe = await stripePromise;
+            if (stripe) {
+                const { error } = await stripe.redirectToCheckout({ sessionId: session.id });
+                if (error) {
+                    console.error("Stripe redirection error:", error);
+                }
             }
         } catch (error) {
-            console.error("Error in payment initialization:", error);
+            console.error("Error creating Stripe checkout session:", error);
         }
     };
+    
 
     return (
         <div>
-            {/* Uncomment and set the correct Paytm script here if needed */}
-            {/* <Script
-                id="paytm"
-                type="application/javascript"
-                crossOrigin="anonymous"
-                src={`https://securegw.paytm.in/merchantpgpui/checkoutjs/merchants/${process.env.NEXT_PUBLIC_MID}.js`}
-            ></Script> */}
             <section className="text-black body-font relative">
                 <div className="container px-5 py-24 mx-auto min-h-screen">
                     <div className="flex flex-col w-full mb-12">
@@ -76,11 +63,11 @@ const Checkout = () => {
                         <ul className="list-decimal px-8">
                             {cart.map((item, index) => (
                                 <li key={index}>
-                                    Product {item[0]} with a price of ₹{item[1]}
+                                    Product {item[0]} with a price of ${item[1]}
                                 </li>
                             ))}
                         </ul>
-                        <div className="font-bold">Subtotal: ₹{subtotal}</div>
+                        <div className="font-bold">Subtotal: ${subtotal}</div>
                     </div>
                     <div className="flex flex-wrap -m-2">
                         <div className="p-2 w-1/2">
@@ -108,6 +95,7 @@ const Checkout = () => {
                             </div>
                         </div>
                         <div className="p-2 w-full">
+                            {/* <button onClick={submit} className="flex text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Pay Now</button> */}
                             <button onClick={submit} className="flex text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Pay Now</button>
                         </div>
                     </div>
