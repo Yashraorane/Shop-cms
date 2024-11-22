@@ -1,20 +1,19 @@
-"use client";  // Ensure this is at the top of the file
+"use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";  // Use this from next/navigation
-import { loadStripe } from "@stripe/stripe-js";
+import { useSearchParams } from "next/navigation";
+
+export const dynamic = "force-dynamic"; // Ensure dynamic rendering
 
 const Success = () => {
     const [paymentStatus, setPaymentStatus] = useState(null);
-    const searchParams = useSearchParams();  // Get query parameters with useSearchParams
-    const session_id = searchParams.get('session_id');  // Extract session_id from query params
+    const searchParams = useSearchParams();
+    const session_id = searchParams.get('session_id');
 
     useEffect(() => {
         if (session_id) {
             const fetchPaymentStatus = async () => {
-                console.log('Fetching payment status for session:', session_id);
                 try {
-                    console.log(process.env.NEXT_PUBLIC_STRAPI_URL)
                     const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/orders/payment-status`, {
                         method: 'POST',
                         headers: {
@@ -23,10 +22,7 @@ const Success = () => {
                         body: JSON.stringify({ sessionId: session_id }),
                     });
 
-
-                    console.log('Response received:', response);
                     const data = await response.json();
-                    console.log('Received data:', data);
                     if (data.status === 'paid') {
                         setPaymentStatus('Payment Successful!');
                     } else {
@@ -40,10 +36,10 @@ const Success = () => {
 
             fetchPaymentStatus();
         }
-    }, [session_id]);  // This will re-run the effect when session_id changes
+    }, [session_id]);
 
-    if (!session_id) {
-        return <div>Loading...</div>;  // Optionally handle loading state
+    if (!session_id || paymentStatus === null) {
+        return <div>Loading your payment status...</div>;
     }
 
     return (
@@ -52,11 +48,7 @@ const Success = () => {
                 <div className="container px-5 py-24 mx-auto">
                     <div className="flex flex-col text-center w-full mb-12">
                         <h1 className="sm:text-3xl text-2xl font-medium title-font mb-4 text-gray-900">Your order has been {paymentStatus}</h1>
-                        <p className="lg:w-2/3 mx-auto leading-relaxed text-base">Whatever cardigan tote bag tumblr hexagon brooklyn asymmetrical gentrify, subway tile poke farm-to-table. Franzen you probably haven&apos;t heard of them man bun deep.</p>
-                    </div>
-                    <div className="flex lg:w-2/3 w-full sm:flex-row flex-col mx-auto px-8 sm:space-x-4 sm:space-y-0 space-y-4 sm:px-0 items-end">
-
-
+                        <p className="lg:w-2/3 mx-auto leading-relaxed text-base">Thank you for your purchase. Please check your email for the order details.</p>
                     </div>
                 </div>
             </section>
